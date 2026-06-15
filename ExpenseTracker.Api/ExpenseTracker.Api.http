@@ -1,0 +1,63 @@
+@ExpenseTracker.Api_HostAddress = http://localhost:5132
+
+#if (EnableOpenAPI)
+GET {{ExpenseTracker.Api_HostAddress}}/openapi/v1.json
+Accept: application/json
+
+###
+#endif
+
+### Categories
+GET {{ExpenseTracker.Api_HostAddress}}/api/categories
+Accept: application/json
+
+###
+POST {{ExpenseTracker.Api_HostAddress}}/api/categories
+Content-Type: application/json
+
+{
+  "name": "Groceries"
+}
+
+### Budgets
+GET {{ExpenseTracker.Api_HostAddress}}/api/budgets/status?month=1&year=2025
+Accept: application/json
+
+###
+POST {{ExpenseTracker.Api_HostAddress}}/api/budgets
+Content-Type: application/json
+
+{
+  "month": 1,
+  "year": 2025,
+  "amount": 5000
+}
+
+### Expenses
+GET {{ExpenseTracker.Api_HostAddress}}/api/expenses?month=3&year=2026
+Accept: application/json
+
+###
+POST {{ExpenseTracker.Api_HostAddress}}/api/expenses
+Content-Type: application/json
+
+{
+  "categoryId": 1,
+  "amount": 150,
+  "description": "Market shopping"
+}
+
+### Budget Breakdown
+GET {{ExpenseTracker.Api_HostAddress}}/api/budgets/breakdown?month=1&year=2025
+Accept: application/json
+
+### Chat
+POST {{ExpenseTracker.Api_HostAddress}}/api/chat
+Content-Type: application/json
+
+{
+  "message": "500 TL ye döner yedim",
+  "sessionId": ""
+}
+
+###

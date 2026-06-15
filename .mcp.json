@@ -1,0 +1,8 @@
+{
+  "servers": {
+    "local_expensetrackermcp": {
+     "type": "http",
+      "url": "http://localhost:5132/mcp"
+    }
+  }
+}
