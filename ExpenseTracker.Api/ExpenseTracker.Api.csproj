@@ -21,4 +21,8 @@
     <Folder Include="Controllers\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\ExpenseTracker.Agent\ExpenseTracker.Agent.csproj" />
+  </ItemGroup>
+
 </Project>

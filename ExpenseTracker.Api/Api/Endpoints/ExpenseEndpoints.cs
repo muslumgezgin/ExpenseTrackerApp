@@ -1,4 +1,5 @@
-﻿using ExpenseTracker.Api.Application.DTOs;
+﻿using ExpenseTracker.Agent.Interfaces;
+using ExpenseTracker.Api.Application.DTOs;
 using ExpenseTracker.Api.Application.Interfaces;
 
 namespace ExpenseTracker.Api.Api.Endpoints;
@@ -10,21 +11,21 @@ public static class ExpenseEndpoints
         var group = app.MapGroup("/api");
 
         // POST /api/chat
-        //group.MapPost("/chat", async (ChatRequest request, IAiOrchestrator aiOrchestrator, CancellationToken ct) =>
-        //{
-        //    if (string.IsNullOrWhiteSpace(request.Message))
-        //    {
-        //        return Results.BadRequest("Message is required.");
-        //    }
+        group.MapPost("/chat", async (ChatRequest request, IAiOrchestrator aiOrchestrator, CancellationToken ct) =>
+        {
+            if (string.IsNullOrWhiteSpace(request.Message))
+            {
+                return Results.BadRequest("Message is required.");
+            }
 
-        //    var sessionId = string.IsNullOrWhiteSpace(request.SessionId)
-        //        ? Guid.NewGuid().ToString("N")
-        //        : request.SessionId;
+            var sessionId = string.IsNullOrWhiteSpace(request.SessionId)
+                ? Guid.NewGuid().ToString("N")
+                : request.SessionId;
 
-        //    var response = await aiOrchestrator.ProcessUserRequestAsync(request.Message, sessionId, ct);
+            var response = await aiOrchestrator.ProcessUserRequestAsync(request.Message, sessionId, ct);
 
-        //    return Results.Ok(new ChatResponse(response, sessionId));
-        //});
+            return Results.Ok(new ChatResponse(response, sessionId));
+        });
 
         // POST /api/categories
         group.MapPost("/categories", async (CreateCategoryRequest request, IExpenseApplicationService expenseService, CancellationToken ct) =>
