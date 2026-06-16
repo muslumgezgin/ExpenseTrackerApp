@@ -1,5 +1,5 @@
-﻿using Azure.AI.Extensions.OpenAI;
-using Azure.AI.Projects;
+﻿using Azure.AI.Projects;
+using Azure.AI.Projects.OpenAI;
 using Azure.Identity;
 using ExpenseTracker.Agent.Interfaces;
 using ExpenseTracker.Agent.Models;
@@ -27,9 +27,10 @@ public class AiOrchestrator(IConfiguration configuration,
         if (string.IsNullOrWhiteSpace(endpoint) || string.IsNullOrWhiteSpace(agentName))
             throw new InvalidOperationException("Azure Foundry settings are missing. AzureFoundry:ProjectEndpoint and AzureFoundry:AgentName must be configured.");
 
-        var projectClient = new AIProjectClient(new Uri(endpoint), new DefaultAzureCredential());
+        var projectClient = new AIProjectClient(new Uri(endpoint), new AzureCliCredential(
+            new AzureCliCredentialOptions { TenantId = configuration["AzureFoundry:TenantId"] }));
 
-        return projectClient.ProjectOpenAIClient.GetProjectResponsesClientForAgent(agentName);
+        return projectClient.OpenAI.GetProjectResponsesClientForAgent(agentName);
     });
 
     private static readonly ConcurrentDictionary<string, SessionState> Sessions = new();

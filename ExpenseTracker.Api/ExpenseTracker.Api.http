@@ -56,7 +56,7 @@ POST {{ExpenseTracker.Api_HostAddress}}/api/chat
 Content-Type: application/json
 
 {
-  "message": "500 TL ye döner yedim",
+  "message": "I ate 50 USD worth of doner",
   "sessionId": ""
 }
 

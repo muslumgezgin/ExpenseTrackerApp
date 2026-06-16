@@ -1,3 +1,4 @@
+using ExpenseTracker.Agent.Extensions;
 using ExpenseTracker.Api.Api.Endpoints;
 using ExpenseTracker.Api.Application.Interfaces;
 using ExpenseTracker.Api.Application.Services;
@@ -28,6 +29,10 @@ builder.Services.AddCors(options =>
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 
+builder.Services.AddHttpClient();
+builder.Services.AddScoped<IExpenseApplicationService, ExpenseApplicationService>();
+builder.Services.AddAiOrchestration(builder.Configuration);
+
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
@@ -36,11 +41,8 @@ builder.Services
     .WithToolsFromAssembly()
     .WithHttpTransport();
 
-builder.Services.AddHttpClient();
-builder.Services.AddScoped<IExpenseApplicationService, ExpenseApplicationService>();
-
-
 var app = builder.Build();
+
 
 #if DEBUG
 app.UseCors("McpInspector");
