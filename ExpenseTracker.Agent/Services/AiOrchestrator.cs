@@ -188,10 +188,10 @@ public class AiOrchestrator(IConfiguration configuration,
                     var budgetNote = budgetSummary is null
                         ? "No budget defined for this month."
                         : budgetSummary.IsOverBudget
-                            ? $"⚠️ You have exceeded your monthly budget by **{FormatTL(Math.Abs(budgetSummary.Remaining))}** (limit: **{FormatTL(budgetSummary.Limit)}**, total spent: **{FormatTL(budgetSummary.TotalSpent)}**)."
-                            : $"Remaining budget: **{FormatTL(budgetSummary.Remaining)}** / **{FormatTL(budgetSummary.Limit)}** (spent this month: **{FormatTL(budgetSummary.TotalSpent)}**)";
+                            ? $"⚠️ You have exceeded your monthly budget by **{FormatUSD(Math.Abs(budgetSummary.Remaining))}** (limit: **{FormatUSD(budgetSummary.Limit)}**, total spent: **{FormatUSD(budgetSummary.TotalSpent)}**)."
+                            : $"Remaining budget: **{FormatUSD(budgetSummary.Remaining)}** / **{FormatUSD(budgetSummary.Limit)}** (spent this month: **{FormatUSD(budgetSummary.TotalSpent)}**)";
 
-                    return $"✅ **Expense added:** {created.Description} — **{FormatTL(created.Amount)}** / **{created.CategoryName}**\n\n{budgetNote}";
+                    return $"✅ **Expense added:** {created.Description} — **{FormatUSD(created.Amount)}** / **{created.CategoryName}**\n\n{budgetNote}";
                 }
 
             case "list_categories":
@@ -213,7 +213,7 @@ public class AiOrchestrator(IConfiguration configuration,
 
                     return budget is null
                         ? "No budget defined for this month."
-                        : $"**{now.ToString("MMMM yyyy", CultureInfo.GetCultureInfo("tr-TR"))} budget:** {FormatTL(budget.Limit)}";
+                        : $"**{now.ToString("MMMM yyyy", CultureInfo.GetCultureInfo("en-US"))} budget:** {FormatUSD(budget.Limit)}";
                 }
 
             default:
@@ -221,9 +221,7 @@ public class AiOrchestrator(IConfiguration configuration,
         }
     }
 
-
-    private static string FormatTL(decimal amount) => amount.ToString("C", CultureInfo.GetCultureInfo("tr-TR"));
-
+    private static string FormatUSD(decimal amount) => amount.ToString("C", CultureInfo.GetCultureInfo("en-US"));
 
     private static async Task<BudgetModel?> GetBudgetSafeAsync(HttpClient client, int month, int year, CancellationToken ct)
     {
