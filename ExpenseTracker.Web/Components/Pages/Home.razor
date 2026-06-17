@@ -161,14 +161,9 @@
     private bool _loading = true;
     private string _currentMonth = string.Empty;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         _currentMonth = DateTime.Now.ToString("MMMM yyyy", CultureInfo.GetCultureInfo("tr-TR"));
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (!firstRender) return;
 
         var now = DateTime.Now;
         var breakdownTask = ExpenseApi.GetBudgetBreakdownAsync(now.Month, now.Year);
@@ -179,7 +174,6 @@
         _breakdown = breakdownTask.Result;
         _expenses = expensesTask.Result;
         _loading = false;
-        StateHasChanged();
     }
 
     private static string FormatTL(decimal amount) =>

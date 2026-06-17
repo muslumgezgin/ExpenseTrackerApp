@@ -169,10 +169,10 @@
         SessionService.AddMessage(message, true);
         _isThinking = true;
         StateHasChanged();
-        await ScrollToBottomAsync();
 
         try
         {
+            await ScrollToBottomAsync();
             var response = await AiOrchestrator.ProcessUserRequestAsync(message, SessionService.ActiveSession.Id);
             SessionService.AddMessage(response, false);
         }
