@@ -1,4 +1,3 @@
-using System.Net.Http.Json;
 using ExpenseTracker.Agent.Interfaces;
 
 namespace ExpenseTracker.Web.Services;
@@ -18,19 +17,19 @@ public sealed class ApiAiOrchestrator(IHttpClientFactory httpClientFactory, ILog
             if (!response.IsSuccessStatusCode)
             {
                 logger.LogWarning("Chat API returned {StatusCode}.", response.StatusCode);
-                return "İsteğiniz şu an işlenemiyor, lütfen tekrar deneyin.";
+                return "Your request cannot be processed right now, please try again.";
             }
 
             var payload = await response.Content.ReadFromJsonAsync<ChatResponse>(cancellationToken: cancellationToken);
             if (!string.IsNullOrWhiteSpace(payload?.SessionId))
                 _sessionId = payload.SessionId;
 
-            return payload?.Response ?? "Üzgünüm, bir yanıt oluşturulamadı.";
+            return payload?.Response ?? "Sorry, a response could not be generated.";
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Chat API call failed.");
-            return "Bir hata oluştu, lütfen tekrar deneyin.";
+            return "An error occurred, please try again.";
         }
     }
 

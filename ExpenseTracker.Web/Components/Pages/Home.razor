@@ -23,14 +23,14 @@
             <MudCard Elevation="2" Style="height:100%">
                 <MudCardHeader>
                     <CardHeaderContent>
-                        <MudText Typo="Typo.h6">💰 Bütçe Durumu</MudText>
+                        <MudText Typo="Typo.h6">💰 Budget Status</MudText>
                     </CardHeaderContent>
                 </MudCardHeader>
                 <MudCardContent>
                     <MudStack Row="true" Justify="Justify.SpaceBetween" Class="mb-1">
-                        <MudText Typo="Typo.body2">Harcanan</MudText>
+                        <MudText Typo="Typo.body2">Spent</MudText>
                         <MudText Typo="Typo.body2">
-                            <strong>@FormatTL(b.TotalSpent)</strong> / @FormatTL(b.Limit)
+                            <strong>@FormatUSD(b.TotalSpent)</strong> / @FormatUSD(b.Limit)
                         </MudText>
                     </MudStack>
                     <MudProgressLinear Value="@pct"
@@ -40,11 +40,11 @@
                              Color="@(b.IsOverBudget ? Color.Error : Color.Success)">
                         @if (b.IsOverBudget)
                         {
-                            <span>⚠️ Limit @FormatTL(Math.Abs(b.Remaining)) aşıldı!</span>
+                            <span>⚠️ Over budget by @FormatUSD(Math.Abs(b.Remaining))!</span>
                         }
                         else
                         {
-                            <span>Kalan: @FormatTL(b.Remaining)</span>
+                            <span>Remaining: @FormatUSD(b.Remaining)</span>
                         }
                     </MudText>
                 </MudCardContent>
@@ -54,12 +54,12 @@
         {
             <MudCard Elevation="2" Style="height:100%">
                 <MudCardHeader>
-                    <CardHeaderContent><MudText Typo="Typo.h6">💰 Bütçe Durumu</MudText></CardHeaderContent>
+                    <CardHeaderContent><MudText Typo="Typo.h6">💰 Budget Status</MudText></CardHeaderContent>
                 </MudCardHeader>
                 <MudCardContent>
-                    <MudText Color="Color.Secondary">Bu ay için bütçe tanımlanmamış.</MudText>
+                    <MudText Color="Color.Secondary">No budget set for this month.</MudText>
                     <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2">
-                        AI asistana "Bu ay 5000 TL bütçe belirle" yazabilirsiniz.
+                        You can tell the AI assistant "Set a $5000 budget for this month".
                     </MudText>
                 </MudCardContent>
             </MudCard>
@@ -70,7 +70,7 @@
     <MudItem xs="12" sm="6" lg="4">
         <MudCard Elevation="2" Style="height:100%">
             <MudCardHeader>
-                <CardHeaderContent><MudText Typo="Typo.h6">📂 Kategori Harcamaları</MudText></CardHeaderContent>
+                <CardHeaderContent><MudText Typo="Typo.h6">📂 Category Spending</MudText></CardHeaderContent>
             </MudCardHeader>
             <MudCardContent>
                 @if (_breakdown?.Categories is { Count: > 0 } cats)
@@ -83,7 +83,7 @@
                         <div class="mb-2">
                             <MudStack Row="true" Justify="Justify.SpaceBetween">
                                 <MudText Typo="Typo.body2">@cat.CategoryName</MudText>
-                                <MudText Typo="Typo.body2">@FormatTL(cat.TotalSpent)</MudText>
+                                <MudText Typo="Typo.body2">@FormatUSD(cat.TotalSpent)</MudText>
                             </MudStack>
                             <MudProgressLinear Value="@catPct" Color="Color.Primary" Rounded="true" Size="Size.Small" />
                         </div>
@@ -91,7 +91,7 @@
                 }
                 else if (!_loading)
                 {
-                    <MudText Color="Color.Secondary">Bu ay harcama kaydedilmemiş.</MudText>
+                    <MudText Color="Color.Secondary">No expenses recorded this month.</MudText>
                 }
             </MudCardContent>
         </MudCard>
@@ -101,17 +101,17 @@
     <MudItem xs="12" sm="12" lg="4">
         <MudCard Elevation="2" Style="height:100%">
             <MudCardHeader>
-                <CardHeaderContent><MudText Typo="Typo.h6">🤖 AI Asistan</MudText></CardHeaderContent>
+                <CardHeaderContent><MudText Typo="Typo.h6">🤖 AI Assistant</MudText></CardHeaderContent>
             </MudCardHeader>
             <MudCardContent>
                 <MudText Typo="Typo.body2">
-                    Harcama eklemek, bütçe oluşturmak veya kategori sorgulamak için AI asistanı kullanabilirsiniz.
+                    Use the AI assistant to add expenses, create budgets, or query categories.
                 </MudText>
             </MudCardContent>
             <MudCardActions>
                 <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/chat"
                            StartIcon="@Icons.Material.Outlined.SmartToy">
-                    Sohbete Başla
+                    Start Chat
                 </MudButton>
             </MudCardActions>
         </MudCard>
@@ -121,30 +121,30 @@
     <MudItem xs="12">
         <MudCard Elevation="2">
             <MudCardHeader>
-                <CardHeaderContent><MudText Typo="Typo.h6">🧾 Son Harcamalar</MudText></CardHeaderContent>
+                <CardHeaderContent><MudText Typo="Typo.h6">🧾 Recent Expenses</MudText></CardHeaderContent>
             </MudCardHeader>
             <MudCardContent>
                 @if (_expenses.Count == 0 && !_loading)
                 {
-                    <MudText Color="Color.Secondary">Bu ay henüz harcama kaydedilmemiş.</MudText>
+                    <MudText Color="Color.Secondary">No expenses recorded this month yet.</MudText>
                 }
                 else
                 {
                     <MudTable Items="_expenses" Dense="true" Hover="true" Elevation="0">
                         <HeaderContent>
-                            <MudTh>Tarih</MudTh>
-                            <MudTh>Açıklama</MudTh>
-                            <MudTh>Kategori</MudTh>
-                            <MudTh Style="text-align:right">Tutar</MudTh>
+                            <MudTh>Date</MudTh>
+                            <MudTh>Description</MudTh>
+                            <MudTh>Category</MudTh>
+                            <MudTh Style="text-align:right">Amount</MudTh>
                         </HeaderContent>
                         <RowTemplate>
-                            <MudTd DataLabel="Tarih">@context.Date.ToString("dd MMM HH:mm")</MudTd>
-                            <MudTd DataLabel="Açıklama">@context.Description</MudTd>
-                            <MudTd DataLabel="Kategori">
+                            <MudTd DataLabel="Date">@context.Date.ToString("dd MMM HH:mm")</MudTd>
+                            <MudTd DataLabel="Description">@context.Description</MudTd>
+                            <MudTd DataLabel="Category">
                                 <MudChip T="string" Size="Size.Small" Color="Color.Default">@context.CategoryName</MudChip>
                             </MudTd>
-                            <MudTd DataLabel="Tutar" Style="text-align:right">
-                                <strong>@FormatTL(context.Amount)</strong>
+                            <MudTd DataLabel="Amount" Style="text-align:right">
+                                <strong>@FormatUSD(context.Amount)</strong>
                             </MudTd>
                         </RowTemplate>
                     </MudTable>
@@ -163,7 +163,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _currentMonth = DateTime.Now.ToString("MMMM yyyy", CultureInfo.GetCultureInfo("tr-TR"));
+        _currentMonth = DateTime.Now.ToString("MMMM yyyy", CultureInfo.GetCultureInfo("en-US"));
 
         var now = DateTime.Now;
         var breakdownTask = ExpenseApi.GetBudgetBreakdownAsync(now.Month, now.Year);
@@ -176,6 +176,6 @@
         _loading = false;
     }
 
-    private static string FormatTL(decimal amount) =>
-        amount.ToString("C", CultureInfo.GetCultureInfo("tr-TR"));
+    private static string FormatUSD(decimal amount) =>
+        amount.ToString("C", CultureInfo.GetCultureInfo("en-US"));
 }

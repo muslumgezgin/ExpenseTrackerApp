@@ -31,7 +31,7 @@ public sealed class ChatSessionService
     {
         ActiveSession.Messages.Add(new ChatMessage { Text = text, IsUser = isUser });
         ActiveSession.LastActivity = DateTime.Now;
-        if (isUser && ActiveSession.Name == "Yeni Sohbet" && !string.IsNullOrWhiteSpace(text))
+        if (isUser && ActiveSession.Name == "New Chat" && !string.IsNullOrWhiteSpace(text))
             ActiveSession.Name = text.Length > 28 ? text[..28] + "…" : text;
     }
 }

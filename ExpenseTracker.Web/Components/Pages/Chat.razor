@@ -5,17 +5,17 @@
 @inject ISnackbar Snackbar
 @inject IJSRuntime JS
 
-<PageTitle>AI Asistan</PageTitle>
+<PageTitle>AI Assistant</PageTitle>
 
 <div style="display:flex; height:100dvh; overflow:hidden;">
 
     @* ── Sidebar ── *@
     <div style="width:240px; flex-shrink:0; background:#111; border-right:1px solid #1e1e1e; display:flex; flex-direction:column; overflow:hidden;">
         <div style="padding:16px 12px 8px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid #1e1e1e;">
-            <MudText Typo="Typo.overline" Style="color:#555; letter-spacing:.1em;">SOHBETLER</MudText>
+            <MudText Typo="Typo.overline" Style="color:#555; letter-spacing:.1em;">CONVERSATIONS</MudText>
             <MudIconButton Icon="@Icons.Material.Filled.Add"
                            Size="Size.Small" Color="Color.Primary"
-                           OnClick="NewSession" Title="Yeni Sohbet" />
+                           OnClick="NewSession" Title="New Chat" />
         </div>
         <div style="flex:1; overflow-y:auto; padding:6px;">
             @foreach (var session in SessionService.Sessions)
@@ -67,10 +67,10 @@
                 <div style="margin:auto; text-align:center; padding:40px 16px;">
                     <MudIcon Icon="@Icons.Material.Outlined.AutoAwesome"
                              Style="font-size:52px; color:#2a2a2a; margin-bottom:12px;" />
-                    <MudText Typo="Typo.h6" Style="color:#ccc; margin-bottom:8px;">AI Asistan hazır</MudText>
+                    <MudText Typo="Typo.h6" Style="color:#ccc; margin-bottom:8px;">AI Assistant ready</MudText>
                     <MudText Typo="Typo.body2"
                              Style="color:#555; max-width:380px; line-height:1.6; margin:0 auto 24px;">
-                        Harcama eklemek, kategorileri listelemek veya bütçenizi kontrol etmek için yazın.
+                        Type to add expenses, list categories, or check your budget.
                     </MudText>
                     <div style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center;">
                         @foreach (var s in _suggestions)
@@ -125,7 +125,7 @@
         <div style="border-top:1px solid #181818; padding:12px 20px 16px; flex-shrink:0;">
             <div style="display:flex; gap:8px; align-items:flex-end; background:#161616; border:1px solid #272727; border-radius:12px; padding:8px 8px 8px 14px;">
                 <MudTextField @bind-Value="_userInput"
-                              Placeholder="Bir şeyler yazın… (Enter = gönder, Shift+Enter = yeni satır)"
+                              Placeholder="Type something… (Enter = send, Shift+Enter = new line)"
                               Lines="1" MaxLines="4" AutoGrow="true"
                               Variant="Variant.Text" Underline="false"
                               Immediate="true" Disabled="_isThinking"
@@ -148,10 +148,10 @@
 
     private static readonly string[] _suggestions =
     [
-        "📊 Bütçemi kontrol et",
-        "📋 Kategorileri listele",
-        "🛒 Markete 250 TL harcadım",
-        "🍔 Yemeğe 80 TL harcadım"
+        "📊 Check my budget",
+        "📋 List categories",
+        "🛒 Spent $250 at the grocery store",
+        "🍔 Spent $80 on food"
     ];
 
     private async Task HandleKeyDown(KeyboardEventArgs e)
@@ -178,8 +178,8 @@
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Hata: {ex.Message}", Severity.Error);
-            SessionService.AddMessage("Üzgünüm, bir hata oluştu.", false);
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+            SessionService.AddMessage("Sorry, an error occurred.", false);
         }
         finally
         {

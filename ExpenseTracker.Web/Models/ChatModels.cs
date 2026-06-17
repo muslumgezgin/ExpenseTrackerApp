@@ -10,7 +10,7 @@ public sealed class ChatMessage
 public sealed class ChatSession
 {
     public string Id { get; } = Guid.NewGuid().ToString("N");
-    public string Name { get; set; } = "Yeni Sohbet";
+    public string Name { get; set; } = "New Chat";
     public List<ChatMessage> Messages { get; } = [];
     public DateTime CreatedAt { get; } = DateTime.Now;
     public DateTime LastActivity { get; set; } = DateTime.Now;

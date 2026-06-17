@@ -1,13 +1,13 @@
-﻿@page "/Error"
+@page "/Error"
 @using System.Diagnostics
 
-<PageTitle>Hata</PageTitle>
+<PageTitle>Error</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Small" Class="mt-16 text-center">
     <MudIcon Icon="@Icons.Material.Outlined.ErrorOutline" Style="font-size:80px; color:#cf6679;" />
-    <MudText Typo="Typo.h4" Class="mt-4" Color="Color.Error">Bir Hata Oluştu</MudText>
+    <MudText Typo="Typo.h4" Class="mt-4" Color="Color.Error">An Error Occurred</MudText>
     <MudText Color="Color.Secondary" Class="mt-2 mb-2">
-        İsteğiniz işlenirken beklenmeyen bir hata oluştu.
+        An unexpected error occurred while processing your request.
     </MudText>
     @if (ShowRequestId)
     {
@@ -17,7 +17,7 @@
     }
     <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/"
                StartIcon="@Icons.Material.Outlined.Home">
-        Ana Sayfaya Dön
+        Back to Home
     </MudButton>
 </MudContainer>
 
