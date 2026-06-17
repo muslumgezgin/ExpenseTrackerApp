@@ -4,4 +4,5 @@
   </Folder>
   <Project Path="ExpenseTracker.Agent/ExpenseTracker.Agent.csproj" Id="651c20fb-426b-4e02-a6a1-fb008143ea2e" />
   <Project Path="ExpenseTracker.Api/ExpenseTracker.Api.csproj" />
+  <Project Path="ExpenseTracker.Web/ExpenseTracker.Web.csproj" />
 </Solution>
