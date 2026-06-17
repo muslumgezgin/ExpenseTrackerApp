@@ -1,5 +1,16 @@
 ﻿@page "/not-found"
 @layout MainLayout
 
-<h3>Not Found</h3>
-<p>Sorry, the content you are looking for does not exist.</p>
+<PageTitle>Sayfa Bulunamadı</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="mt-16 text-center">
+    <MudIcon Icon="@Icons.Material.Outlined.SearchOff" Style="font-size:80px; color:#2e2e2e;" />
+    <MudText Typo="Typo.h4" Class="mt-4">404 — Sayfa Bulunamadı</MudText>
+    <MudText Color="Color.Secondary" Class="mt-2 mb-6">
+        Aradığınız sayfa mevcut değil veya taşınmış olabilir.
+    </MudText>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/"
+               StartIcon="@Icons.Material.Outlined.Home">
+        Ana Sayfaya Dön
+    </MudButton>
+</MudContainer>

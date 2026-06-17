@@ -1,7 +1,187 @@
 ﻿@page "/"
+@inject ExpenseTracker.Web.Services.ExpenseApiService ExpenseApi
+@using System.Globalization
+@using ExpenseTracker.Agent.Models
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Dashboard</PageTitle>
 
-<h1>Hello, world!</h1>
+@if (_loading)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="mb-4" />
+}
 
-Welcome to your new app.
+<MudText Typo="Typo.h4" GutterBottom="true">📊 @_currentMonth</MudText>
+
+<MudGrid>
+
+    @* Budget Summary *@
+    <MudItem xs="12" sm="6" lg="4">
+        @if (_breakdown is not null)
+        {
+            var b = _breakdown.Budget;
+            var pct = b.Limit > 0 ? Math.Min((double)(b.TotalSpent / b.Limit * 100m), 100) : 0;
+            <MudCard Elevation="2" Style="height:100%">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">💰 Bütçe Durumu</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudStack Row="true" Justify="Justify.SpaceBetween" Class="mb-1">
+                        <MudText Typo="Typo.body2">Harcanan</MudText>
+                        <MudText Typo="Typo.body2">
+                            <strong>@FormatTL(b.TotalSpent)</strong> / @FormatTL(b.Limit)
+                        </MudText>
+                    </MudStack>
+                    <MudProgressLinear Value="@pct"
+                                       Color="@(b.IsOverBudget ? Color.Error : pct > 75 ? Color.Warning : Color.Success)"
+                                       Rounded="true" Size="Size.Large" Class="mb-2" />
+                    <MudText Typo="Typo.caption"
+                             Color="@(b.IsOverBudget ? Color.Error : Color.Success)">
+                        @if (b.IsOverBudget)
+                        {
+                            <span>⚠️ Limit @FormatTL(Math.Abs(b.Remaining)) aşıldı!</span>
+                        }
+                        else
+                        {
+                            <span>Kalan: @FormatTL(b.Remaining)</span>
+                        }
+                    </MudText>
+                </MudCardContent>
+            </MudCard>
+        }
+        else if (!_loading)
+        {
+            <MudCard Elevation="2" Style="height:100%">
+                <MudCardHeader>
+                    <CardHeaderContent><MudText Typo="Typo.h6">💰 Bütçe Durumu</MudText></CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudText Color="Color.Secondary">Bu ay için bütçe tanımlanmamış.</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2">
+                        AI asistana "Bu ay 5000 TL bütçe belirle" yazabilirsiniz.
+                    </MudText>
+                </MudCardContent>
+            </MudCard>
+        }
+    </MudItem>
+
+    @* Category Breakdown *@
+    <MudItem xs="12" sm="6" lg="4">
+        <MudCard Elevation="2" Style="height:100%">
+            <MudCardHeader>
+                <CardHeaderContent><MudText Typo="Typo.h6">📂 Kategori Harcamaları</MudText></CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent>
+                @if (_breakdown?.Categories is { Count: > 0 } cats)
+                {
+                    @foreach (var cat in cats.OrderByDescending(c => c.TotalSpent))
+                    {
+                        var catPct = _breakdown.Budget.TotalSpent > 0
+                            ? Math.Min((double)(cat.TotalSpent / _breakdown.Budget.TotalSpent * 100m), 100)
+                            : 0;
+                        <div class="mb-2">
+                            <MudStack Row="true" Justify="Justify.SpaceBetween">
+                                <MudText Typo="Typo.body2">@cat.CategoryName</MudText>
+                                <MudText Typo="Typo.body2">@FormatTL(cat.TotalSpent)</MudText>
+                            </MudStack>
+                            <MudProgressLinear Value="@catPct" Color="Color.Primary" Rounded="true" Size="Size.Small" />
+                        </div>
+                    }
+                }
+                else if (!_loading)
+                {
+                    <MudText Color="Color.Secondary">Bu ay harcama kaydedilmemiş.</MudText>
+                }
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    @* AI Assistant Quick Access *@
+    <MudItem xs="12" sm="12" lg="4">
+        <MudCard Elevation="2" Style="height:100%">
+            <MudCardHeader>
+                <CardHeaderContent><MudText Typo="Typo.h6">🤖 AI Asistan</MudText></CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudText Typo="Typo.body2">
+                    Harcama eklemek, bütçe oluşturmak veya kategori sorgulamak için AI asistanı kullanabilirsiniz.
+                </MudText>
+            </MudCardContent>
+            <MudCardActions>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/chat"
+                           StartIcon="@Icons.Material.Outlined.SmartToy">
+                    Sohbete Başla
+                </MudButton>
+            </MudCardActions>
+        </MudCard>
+    </MudItem>
+
+    @* Recent Expenses Table *@
+    <MudItem xs="12">
+        <MudCard Elevation="2">
+            <MudCardHeader>
+                <CardHeaderContent><MudText Typo="Typo.h6">🧾 Son Harcamalar</MudText></CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent>
+                @if (_expenses.Count == 0 && !_loading)
+                {
+                    <MudText Color="Color.Secondary">Bu ay henüz harcama kaydedilmemiş.</MudText>
+                }
+                else
+                {
+                    <MudTable Items="_expenses" Dense="true" Hover="true" Elevation="0">
+                        <HeaderContent>
+                            <MudTh>Tarih</MudTh>
+                            <MudTh>Açıklama</MudTh>
+                            <MudTh>Kategori</MudTh>
+                            <MudTh Style="text-align:right">Tutar</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Tarih">@context.Date.ToString("dd MMM HH:mm")</MudTd>
+                            <MudTd DataLabel="Açıklama">@context.Description</MudTd>
+                            <MudTd DataLabel="Kategori">
+                                <MudChip T="string" Size="Size.Small" Color="Color.Default">@context.CategoryName</MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Tutar" Style="text-align:right">
+                                <strong>@FormatTL(context.Amount)</strong>
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                }
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+</MudGrid>
+
+@code {
+    private BudgetBreakdownModel? _breakdown;
+    private List<ExpenseModel> _expenses = [];
+    private bool _loading = true;
+    private string _currentMonth = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        _currentMonth = DateTime.Now.ToString("MMMM yyyy", CultureInfo.GetCultureInfo("tr-TR"));
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        var now = DateTime.Now;
+        var breakdownTask = ExpenseApi.GetBudgetBreakdownAsync(now.Month, now.Year);
+        var expensesTask = ExpenseApi.GetExpensesAsync(now.Month, now.Year);
+
+        await Task.WhenAll(breakdownTask, expensesTask);
+
+        _breakdown = breakdownTask.Result;
+        _expenses = expensesTask.Result;
+        _loading = false;
+        StateHasChanged();
+    }
+
+    private static string FormatTL(decimal amount) =>
+        amount.ToString("C", CultureInfo.GetCultureInfo("tr-TR"));
+}

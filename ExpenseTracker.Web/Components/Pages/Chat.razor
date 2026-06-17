@@ -1,0 +1,237 @@
+@page "/chat"
+@layout ChatLayout
+@inject IAiOrchestrator AiOrchestrator
+@inject ChatSessionService SessionService
+@inject ISnackbar Snackbar
+@inject IJSRuntime JS
+
+<PageTitle>AI Asistan</PageTitle>
+
+<div style="display:flex; height:100dvh; overflow:hidden;">
+
+    @* ── Sidebar ── *@
+    <div style="width:240px; flex-shrink:0; background:#111; border-right:1px solid #1e1e1e; display:flex; flex-direction:column; overflow:hidden;">
+        <div style="padding:16px 12px 8px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid #1e1e1e;">
+            <MudText Typo="Typo.overline" Style="color:#555; letter-spacing:.1em;">SOHBETLER</MudText>
+            <MudIconButton Icon="@Icons.Material.Filled.Add"
+                           Size="Size.Small" Color="Color.Primary"
+                           OnClick="NewSession" Title="Yeni Sohbet" />
+        </div>
+        <div style="flex:1; overflow-y:auto; padding:6px;">
+            @foreach (var session in SessionService.Sessions)
+            {
+                var isActive = session.Id == SessionService.ActiveSession.Id;
+                <div @onclick="() => SwitchSession(session.Id)"
+                     style="@($"display:flex; align-items:center; gap:8px; padding:9px 10px; border-radius:8px; cursor:pointer; background:{(isActive ? "#1c1830" : "transparent")}; transition:background .15s; margin-bottom:2px;")">
+                    <MudIcon Icon="@Icons.Material.Outlined.Chat" Size="Size.Small"
+                             Style="@SessionIconStyle(session.Id)" />
+                    <div style="overflow:hidden; flex:1;">
+                        <MudText Typo="Typo.body2"
+                                 Style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#ccc;">
+                            @session.Name
+                        </MudText>
+                        <MudText Typo="Typo.caption" Style="color:#444;">
+                            @session.LastActivity.ToString("dd MMM HH:mm")
+                        </MudText>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    @* ── Main ── *@
+    <div style="flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0;">
+
+        @* Top bar *@
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 20px; border-bottom:1px solid #1a1a1a; flex-shrink:0;">
+            <div style="display:flex; align-items:center; gap:8px; overflow:hidden;">
+                <MudIcon Icon="@Icons.Material.Outlined.SmartToy" Style="color:#7c6af7; flex-shrink:0;" />
+                <MudText Typo="Typo.subtitle1"
+                         Style="color:#ddd; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                    @SessionService.ActiveSession.Name
+                </MudText>
+            </div>
+            <MudButton Href="/" Variant="Variant.Text" Color="Color.Default" Size="Size.Small"
+                       StartIcon="@Icons.Material.Outlined.Dashboard"
+                       Style="color:#555; flex-shrink:0;">
+                Dashboard
+            </MudButton>
+        </div>
+
+        @* Messages *@
+        <div @ref="_msgList"
+             style="flex:1; overflow-y:auto; padding:24px 28px; display:flex; flex-direction:column; gap:14px;">
+
+            @if (!SessionService.ActiveSession.Messages.Any())
+            {
+                <div style="margin:auto; text-align:center; padding:40px 16px;">
+                    <MudIcon Icon="@Icons.Material.Outlined.AutoAwesome"
+                             Style="font-size:52px; color:#2a2a2a; margin-bottom:12px;" />
+                    <MudText Typo="Typo.h6" Style="color:#ccc; margin-bottom:8px;">AI Asistan hazır</MudText>
+                    <MudText Typo="Typo.body2"
+                             Style="color:#555; max-width:380px; line-height:1.6; margin:0 auto 24px;">
+                        Harcama eklemek, kategorileri listelemek veya bütçenizi kontrol etmek için yazın.
+                    </MudText>
+                    <div style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center;">
+                        @foreach (var s in _suggestions)
+                        {
+                            <MudChip T="string" OnClick="() => UseSuggestion(s)"
+                                     Variant="Variant.Outlined" Size="Size.Small"
+                                     Style="cursor:pointer; color:#888; border-color:#252525;">
+                                @s
+                            </MudChip>
+                        }
+                    </div>
+                </div>
+            }
+
+            @foreach (var msg in SessionService.ActiveSession.Messages)
+            {
+                <div style="display:flex; align-items:flex-end; gap:8px;
+                            align-self:@(msg.IsUser ? "flex-end" : "flex-start");
+                            flex-direction:@(msg.IsUser ? "row-reverse" : "row");">
+                    <MudAvatar Style="@AvatarStyle(msg.IsUser)">
+                        <MudIcon Icon="@(msg.IsUser ? Icons.Material.Filled.Person : Icons.Material.Outlined.SmartToy)"
+                                 Size="Size.Small"
+                                 Style="@AvatarIconStyle(msg.IsUser)" />
+                    </MudAvatar>
+                    <MudPaper Elevation="0"
+                              Style="@BubbleStyle(msg.IsUser)">
+                        <div style="font-size:14px; line-height:1.65; white-space:pre-wrap; word-break:break-word;">
+                            @((MarkupString)FormatMessage(msg.Text))
+                        </div>
+                        <div style="font-size:11px; opacity:.4; margin-top:4px; text-align:right;">
+                            @msg.Timestamp.ToString("HH:mm")
+                        </div>
+                    </MudPaper>
+                </div>
+            }
+
+            @if (_isThinking)
+            {
+                <div style="display:flex; align-items:flex-end; gap:8px; align-self:flex-start;">
+                    <MudAvatar Style="background:#1c1830; width:30px; height:30px;">
+                        <MudIcon Icon="@Icons.Material.Outlined.SmartToy" Size="Size.Small" Style="color:#7c6af7;" />
+                    </MudAvatar>
+                    <MudPaper Elevation="0"
+                              Style="background:#181818; border:1px solid #262626; padding:14px 18px; border-radius:16px; border-bottom-left-radius:4px; display:flex; gap:5px; align-items:center;">
+                        <MudProgressCircular Size="Size.Small" Color="Color.Primary" Indeterminate="true" />
+                    </MudPaper>
+                </div>
+            }
+        </div>
+
+        @* Input area *@
+        <div style="border-top:1px solid #181818; padding:12px 20px 16px; flex-shrink:0;">
+            <div style="display:flex; gap:8px; align-items:flex-end; background:#161616; border:1px solid #272727; border-radius:12px; padding:8px 8px 8px 14px;">
+                <MudTextField @bind-Value="_userInput"
+                              Placeholder="Bir şeyler yazın… (Enter = gönder, Shift+Enter = yeni satır)"
+                              Lines="1" MaxLines="4" AutoGrow="true"
+                              Variant="Variant.Text" Underline="false"
+                              Immediate="true" Disabled="_isThinking"
+                              Style="flex:1;"
+                              OnKeyDown="HandleKeyDown" />
+                <MudIconButton Icon="@Icons.Material.Filled.Send"
+                               Color="Color.Primary" Variant="Variant.Filled"
+                               Size="Size.Medium" OnClick="SendMessageAsync"
+                               Disabled="@(string.IsNullOrWhiteSpace(_userInput) || _isThinking)" />
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@code {
+    private string _userInput = string.Empty;
+    private bool _isThinking;
+    private ElementReference _msgList;
+
+    private static readonly string[] _suggestions =
+    [
+        "📊 Bütçemi kontrol et",
+        "📋 Kategorileri listele",
+        "🛒 Markete 250 TL harcadım",
+        "🍔 Yemeğe 80 TL harcadım"
+    ];
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !e.ShiftKey)
+            await SendMessageAsync();
+    }
+
+    private async Task SendMessageAsync()
+    {
+        var message = _userInput.Trim();
+        if (string.IsNullOrWhiteSpace(message) || _isThinking) return;
+
+        _userInput = string.Empty;
+        SessionService.AddMessage(message, true);
+        _isThinking = true;
+        StateHasChanged();
+        await ScrollToBottomAsync();
+
+        try
+        {
+            var response = await AiOrchestrator.ProcessUserRequestAsync(message, SessionService.ActiveSession.Id);
+            SessionService.AddMessage(response, false);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Hata: {ex.Message}", Severity.Error);
+            SessionService.AddMessage("Üzgünüm, bir hata oluştu.", false);
+        }
+        finally
+        {
+            _isThinking = false;
+            StateHasChanged();
+            await ScrollToBottomAsync();
+        }
+    }
+
+    private async Task UseSuggestion(string suggestion)
+    {
+        _userInput = suggestion;
+        await SendMessageAsync();
+    }
+
+    private void NewSession() => SessionService.CreateNewSession();
+
+    private async Task SwitchSession(string id)
+    {
+        SessionService.SwitchSession(id);
+        await ScrollToBottomAsync();
+    }
+
+    private async Task ScrollToBottomAsync()
+    {
+        await Task.Delay(50);
+        await JS.InvokeVoidAsync("scrollToEnd", _msgList);
+    }
+
+    private static string BubbleStyle(bool isUser) =>
+        isUser
+            ? "max-width:65%; padding:10px 14px; border-radius:16px; border-bottom-right-radius:4px; background:linear-gradient(135deg,#5a4ed6,#7c6af7); color:#fff;"
+            : "max-width:65%; padding:10px 14px; border-radius:16px; border-bottom-left-radius:4px; background:#181818; border:1px solid #262626; color:#ddd;";
+
+    private string SessionIconStyle(string sessionId) =>
+        sessionId == SessionService.ActiveSession.Id
+            ? "color:#7c6af7; flex-shrink:0;"
+            : "color:#444; flex-shrink:0;";
+
+    private static string AvatarStyle(bool isUser) =>
+        isUser
+            ? "background:#0f2132; width:30px; height:30px; flex-shrink:0;"
+            : "background:#1c1830; width:30px; height:30px; flex-shrink:0;";
+
+    private static string AvatarIconStyle(bool isUser) =>
+        isUser ? "color:#4a9eff;" : "color:#7c6af7;";
+
+    private static string FormatMessage(string text)
+    {
+        var html = System.Net.WebUtility.HtmlEncode(text);
+        html = System.Text.RegularExpressions.Regex.Replace(html, @"\*\*(.+?)\*\*", "<strong>$1</strong>");
+        html = html.Replace("\n", "<br/>");
+        return html;
+    }
+}
