@@ -1,6 +1,5 @@
 ﻿using Azure.AI.OpenAI;
 using Azure.AI.Projects;
-using Azure.Core;
 using Azure.Identity;
 using ExpenseTracker.Agent.Interfaces;
 using ExpenseTracker.Agent.Services;
@@ -54,7 +53,7 @@ public static class ServiceCollectionExtensions
                     new Uri(configuration["AzureFoundry:ProjectEndpoint"] ?? throw new InvalidOperationException("AzureFoundry:ProjectEndpoint is not registered.")),
                     new DefaultAzureCredential())
                 .GetProjectOpenAIClient()
-                .GetChatClient(configuration["AzureFoundry:Deployment"] ?? configuration["AzureFoundry:AgentName"] ?? throw new InvalidOperationException("AzureFoundry:Deployment veya AgentName yapılandırılmalıdır."))
+                .GetChatClient(configuration["AzureFoundry:Deployment"] ?? configuration["AzureFoundry:AgentName"] ?? throw new InvalidOperationException("AzureFoundry:Deployment veya AgentName should be registered."))
                 .AsIChatClient(),
         };
     }
