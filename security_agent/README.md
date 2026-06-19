@@ -12,12 +12,14 @@ START
 │  scan_node  │  Regex heuristics over .cs / appsettings*.json files
 └──────┬──────┘
        │
-       ├─── no findings ──────────────────────────┐
-       │                                           ▼
-       └─── has findings ──► ┌───────────────┐  ┌─────────────┐
-                             │ triage_node   │─►│ report_node │──► END
-                             │ (LLM confirm) │  │ (Markdown)  │
-                             └───────────────┘  └─────────────┘
+       ├─── --no-llm flag OR no findings ────────────────────────┐
+       │                                                          ▼
+       └─── has findings ──► ┌───────────────┐  ┌─────────────────────┐
+                             │ triage_node   │─►│     report_node     │──► END
+                             │ (LLM confirm) │  │ (Markdown — raw or  │
+                             └───────────────┘  │  triaged depending  │
+                                                │  on mode)           │
+                                                └─────────────────────┘
 ```
 
 **Three nodes:**
@@ -25,9 +27,9 @@ START
 |------|------|
 | `scan_node` | Runs 7 regex rules + a project-level auth check; produces raw `RawFinding` objects |
 | `triage_node` | Sends all candidates to `gpt-4.1` via Azure AI Foundry; gets back structured `TriagedFinding` objects (confirmed/dismissed, severity, OWASP category, recommendation) |
-| `report_node` | Formats confirmed findings into a Markdown report sorted by severity |
+| `report_node` | Renders a raw-candidates report (`--no-llm`) or a confirmed-findings report with OWASP mapping (full mode) |
 
-**Conditional routing:** if the scanner produces zero candidates the LLM call is skipped entirely and the graph jumps directly to `report_node`.
+**Conditional routing:** the graph skips `triage_node` and jumps directly to `report_node` when `--no-llm` is set or the scanner finds zero candidates. The LLM is never imported or authenticated in those cases.
 
 ## Scanner rules
 
@@ -51,8 +53,8 @@ The LLM maps each confirmed finding to one of the OWASP API Security Top 10 2023
 ## Prerequisites
 
 - Python 3.11+
-- Azure AI Foundry project with a `gpt-4.1` (or compatible) deployment
-- Azure CLI (`az`) — for local `DefaultAzureCredential` authentication
+- Azure AI Foundry project with a `gpt-4.1` (or compatible) deployment *(full mode only)*
+- Azure CLI (`az`) — for local `DefaultAzureCredential` authentication *(full mode only)*
 
 ## Installation
 
@@ -70,7 +72,9 @@ pydantic>=2.0
 
 ## Configuration
 
-Authentication uses `DefaultAzureCredential` — no API keys needed. Log in once with the Azure CLI:
+`--no-llm` mode requires no credentials and no environment variables — just run it.
+
+For full mode, authentication uses `DefaultAzureCredential` — no API keys needed. Log in once with the Azure CLI:
 
 ```powershell
 az login
@@ -94,41 +98,75 @@ The agent strips the `/api/projects/...` path internally and derives the Azure O
 ## Usage
 
 ```powershell
-# Scan the default path (../ExpenseTracker.Api)
+# Step 1 — heuristic scan only, no credentials required
+python -m security_agent.main --no-llm
+
+# Step 2 — full run: LLM confirms findings, filters false positives, maps to OWASP
 python -m security_agent.main
 
 # Scan a specific project directory
+python -m security_agent.main path\to\YourApi --no-llm
 python -m security_agent.main path\to\YourApi
 
-# Write the Markdown report to a file
+# Save the report to a file
 python -m security_agent.main --output report.md
-
-# Combine both
-python -m security_agent.main path\to\YourApi --output report.md
+python -m security_agent.main --no-llm --output candidates.md
 ```
 
-### Example output
+### Example output — `--no-llm`
 
 ```
 Security Review Agent
 Scanning : C:\...\ExpenseTracker.Api
+Mode     : heuristic scan only
+
+  [scan] 5 candidate finding(s) detected
+
+Heuristic candidates : 5
+
+========================================================================
+# Security Review Report
+**Mode:** heuristic scan only — LLM triage skipped.
+> Re-run without `--no-llm` to confirm findings, filter false positives, and get OWASP mapping.
+
+## Candidates — 5 raw finding(s)
+
+| # | Scanner                  | Location                          | Description                              |
+|---|--------------------------|-----------------------------------|------------------------------------------|
+| 1 | `wildcard_cors`          | `Program.cs:22`                   | CORS policy allows any origin …          |
+| 2 | `sensitive_config_value` | `appsettings.json:12`             | Sensitive identifier committed …         |
+| 3 | `allowed_hosts_wildcard` | `appsettings.json:19`             | AllowedHosts:'*' disables …              |
+| 4 | `exception_detail_exposure` | `GlobalExceptionHandler.cs:19` | exception.Message written to response … |
+| 5 | `missing_authentication` | `Program.cs:1`                    | No auth middleware configured …          |
+========================================================================
+```
+
+### Example output — full mode
+
+```
+Security Review Agent
+Scanning : C:\...\ExpenseTracker.Api
+Mode     : heuristic scan + LLM triage
 
   [scan]   5 candidate finding(s) detected
   [triage] sending 5 finding(s) to LLM for confirmation …
   [triage] 5 finding(s) confirmed by LLM
+
+Heuristic candidates : 5
+Confirmed by LLM     : 5
 
 ========================================================================
 # Security Review Report
 
 ## Summary — 5 confirmed finding(s)
 
-| # | Severity | OWASP   | Title                          | Location                              |
-|---|:--------:|---------|--------------------------------|---------------------------------------|
-| 1 | HIGH     | API2    | No Authentication Middleware   | Program.cs:1                          |
-| 2 | HIGH     | API8    | Sensitive Config in VCS        | appsettings.json:12                   |
-| 3 | MEDIUM   | API8    | Wildcard CORS Policy           | Program.cs:22                         |
-| 4 | MEDIUM   | API8    | AllowedHosts Wildcard          | appsettings.json:19                   |
-| 5 | MEDIUM   | API8    | Exception Detail Exposure      | GlobalExceptionHandler.cs:19          |
+| # | Severity   | OWASP | Title                        | Location                      |
+|---|:----------:|-------|------------------------------|-------------------------------|
+| 1 | **HIGH**   | API2  | No Authentication Middleware | Program.cs:1                  |
+| 2 | **HIGH**   | API8  | Sensitive Config in VCS      | appsettings.json:12           |
+| 3 | **MEDIUM** | API8  | Wildcard CORS Policy         | Program.cs:22                 |
+| 4 | **MEDIUM** | API8  | AllowedHosts Wildcard        | appsettings.json:19           |
+| 5 | **MEDIUM** | API8  | Exception Detail Exposure    | GlobalExceptionHandler.cs:19  |
 ========================================================================
 ```
 

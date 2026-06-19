@@ -19,27 +19,36 @@ def main() -> None:
         help="Root directory of the .NET project to scan (default: ../ExpenseTracker.Api)",
     )
     parser.add_argument(
+        "--no-llm",
+        action="store_true",
+        help="Run heuristic scan only — skip LLM triage (no Azure credentials required)",
+    )
+    parser.add_argument(
         "--output", "-o",
         metavar="FILE",
         help="Write the markdown report to FILE instead of stdout",
     )
     args = parser.parse_args()
 
-    if not os.environ.get("AZURE_FOUNDRY_ENDPOINT"):
+    if not args.no_llm and not os.environ.get("AZURE_FOUNDRY_ENDPOINT"):
         sys.exit(
             "ERROR: AZURE_FOUNDRY_ENDPOINT is not set.\n"
             "Export the Azure AI Foundry project endpoint before running:\n"
             "  $env:AZURE_FOUNDRY_ENDPOINT='https://<resource>.services.ai.azure.com/api/projects/<project>'\n"
-            "Then authenticate with: az login"
+            "Then authenticate with: az login\n"
+            "\nTip: use --no-llm to run the heuristic scanner without Azure credentials."
         )
 
     source = str(Path(args.source_path).resolve())
-    print(f"Security Review Agent")
+    mode = "heuristic scan only" if args.no_llm else "heuristic scan + LLM triage"
+    print("Security Review Agent")
     print(f"Scanning : {source}")
+    print(f"Mode     : {mode}")
     print()
 
     initial_state: SecurityReviewState = {
         "source_path": source,
+        "no_llm": args.no_llm,
         "raw_findings": [],
         "triaged_findings": [],
         "report_markdown": "",
@@ -48,12 +57,12 @@ def main() -> None:
     result = graph.invoke(initial_state)
 
     raw_count = len(result["raw_findings"])
-    confirmed_count = len(result["triaged_findings"])
     report = result["report_markdown"]
 
     print()
     print(f"Heuristic candidates : {raw_count}")
-    print(f"Confirmed by LLM     : {confirmed_count}")
+    if not args.no_llm:
+        print(f"Confirmed by LLM     : {len(result['triaged_findings'])}")
     print()
     print("=" * 72)
     print(report)
