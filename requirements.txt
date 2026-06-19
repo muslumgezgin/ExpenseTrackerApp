@@ -1,0 +1,8 @@
+# Root requirements — covers all agents (security, fraud, supervisor)
+# Run from repo root: pip install -r requirements.txt
+langgraph>=0.2
+langchain-openai>=0.3
+langchain-core>=0.3
+azure-identity>=1.19
+pydantic>=2.0
+requests>=2.32
